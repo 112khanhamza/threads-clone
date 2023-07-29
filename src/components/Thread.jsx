@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { MoreHorizontal, Heart, Repeat, Send, MessageCircle } from 'react-feather'
-import { functions } from '../appwriteConfig'
+import { Heart, Repeat, Send, MessageCircle, Trash2 } from 'react-feather'
+import { functions, database, DEV_DB_ID, COLLECTION_ID_THREADS } from '../appwriteConfig'
 import TimeAgo from 'javascript-time-ago'
 import ReactTimeAgo from 'react-time-ago'
 import en from 'javascript-time-ago/locale/en.json'
@@ -9,7 +9,7 @@ import ru from 'javascript-time-ago/locale/ru.json'
 TimeAgo.addDefaultLocale(en)
 TimeAgo.addLocale(ru)
 
-const Thread = ({ thread }) => {
+const Thread = ({ thread, setThread }) => {
     const [loading, setLoading] = useState(true)
     const [owner, setOwner] = useState(null)
 
@@ -31,6 +31,12 @@ const Thread = ({ thread }) => {
         setLoading(false)
     }
 
+    const handleDelete = async () => {
+        setThread(prevState => prevState.filter(item => item.$id !== thread.$id))
+        database.deleteDocument(DEV_DB_ID, COLLECTION_ID_THREADS, thread.$id)
+        console.log('Thread was deleted')
+    }
+
     if (loading) return
 
   return (
@@ -46,17 +52,20 @@ const Thread = ({ thread }) => {
             <div className='flex justify-between gap-2'>
                 <strong>{owner.name}</strong>
 
-                <div className='flex justify-between gap-2'>
+                <div className='flex justify-between gap-2 items-center cursor-pointer'>
                 <p className='text-[rgba(97,97,97,1)]'>
                     {<ReactTimeAgo date={new Date(thread.$createdAt).getTime()} locale="en-US"/>}
                 </p>
-                <MoreHorizontal />
+                <Trash2 onClick={handleDelete} size={14}/>
                 </div>
             </div>
 
             {/* Thread Body */}
-            <div className='py-4'>
-                <span>{thread.body}</span>
+            <div className='py-4' style={{ whiteSpace: 'pre-wrap' }}>
+                {thread.body}
+                {thread.image && (
+                    <img className='object-cover border border-[rgba(49,49,50,1)] rounded-md' src={thread.image} />
+                )}
             </div>
 
             {/* Thread Butttons */}

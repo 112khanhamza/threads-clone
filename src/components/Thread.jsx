@@ -12,6 +12,8 @@ TimeAgo.addLocale(ru)
 const Thread = ({ thread, setThread }) => {
     const [loading, setLoading] = useState(true)
     const [owner, setOwner] = useState(null)
+    const [threadInstance, setThreadInstance] = useState(thread)
+    const currentUserId = '64c53477c6c7921e078a'
 
     useEffect(() => {
         // get owner info
@@ -35,6 +37,33 @@ const Thread = ({ thread, setThread }) => {
         setThread(prevState => prevState.filter(item => item.$id !== thread.$id))
         database.deleteDocument(DEV_DB_ID, COLLECTION_ID_THREADS, thread.$id)
         console.log('Thread was deleted')
+    }
+
+    const toggleLike = async () => {
+        console.log('Like Toggled')
+        const usersWhoLiked = thread.users_who_liked
+
+        if (usersWhoLiked.includes(currentUserId)) {
+            const index = usersWhoLiked.indexOf(currentUserId)
+            usersWhoLiked.splice(index, 1)
+        } else {
+            usersWhoLiked.push(currentUserId)
+        }
+
+        const payload = {
+            'users_who_liked' : usersWhoLiked,
+            'likes' : usersWhoLiked.length
+        }
+
+        const response = await database.updateDocument(
+            DEV_DB_ID,
+            COLLECTION_ID_THREADS,
+            thread.$id,
+            payload
+        )
+
+        setThreadInstance(response)
+
     }
 
     if (loading) return
@@ -70,7 +99,12 @@ const Thread = ({ thread, setThread }) => {
 
             {/* Thread Butttons */}
             <div className='flex gap-4 py-4'>
-                <Heart size={22} />
+                <Heart 
+                    className='cursor-pointer' 
+                    size={22} 
+                    onClick={toggleLike}
+                    color={threadInstance.users_who_liked.includes(currentUserId) ? '#ff0000' : '#fff'}
+                />
                 <MessageCircle size={22} />
                 <Repeat size={22} />
                 <Send size={22} />
@@ -80,7 +114,7 @@ const Thread = ({ thread, setThread }) => {
             <div className='flex gap-4'>
                 <p className='text-[rgba(97,97,97,1)]'>Replies 16</p>
                 <p className='text-[rgba(97,97,97,1)]'>·</p>
-                <p className='text-[rgba(97,97,97,1)]'>87 Likes</p>
+                <p className='text-[rgba(97,97,97,1)]'>{threadInstance.likes} Likes</p>
             </div>
 
         </div>
